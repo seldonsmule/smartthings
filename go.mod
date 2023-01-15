@@ -1,11 +1,10 @@
-module smartthings
+module github.com/seldonsmule/smartthings
 
 go 1.19
 
 require (
 	github.com/seldonsmule/logmsg v0.0.0-20210504192739-df66bdf17afb
 	github.com/seldonsmule/restapi v0.0.0-20220822181510-849674a268a7
-	github.com/seldonsmule/simpleconffile v0.0.0-20221122220155-7ed90522ee38
 )
 
 require (
