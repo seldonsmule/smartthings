@@ -95,7 +95,7 @@ func (pST *SmartThings) GetStructScenes() bool{
     return false
   }
 
-  r.SaveResponseBody("st_scenes", "StScenes", true)
+  r.SaveResponseBody("st_scenes", "StScenes", false)
 
   return true
 
@@ -225,6 +225,15 @@ func (pST *SmartThings) PrintDeviceList() bool{
   return true
 }
 
+func (pST *SmartThings) ValidateDevice(sDeviceName string) bool {
+
+  if(pST.FindDevice(sDeviceName) == -1){
+    logmsg.Print(logmsg.Warning, "ValidateDevice: Device Name not found: " + sDeviceName)
+    return false
+  }
+
+  return true
+}
 
 func (pST *SmartThings) FindDevice(sDeviceName string) int {
 
@@ -235,6 +244,8 @@ func (pST *SmartThings) FindDevice(sDeviceName string) int {
     }
 
   }
+
+  logmsg.Print(logmsg.Warning, "FindDevice: Device Name not found: " + sDeviceName)
 
   return -1
 }
@@ -333,6 +344,31 @@ func (pST *SmartThings) GetDeviceSwitchStatus(sDeviceName string) (err bool, sta
 }
 
 
+func (pST *SmartThings) ValidateScene(sName string) bool {
+
+  if(pST.FindScene(sName) == -1){
+    logmsg.Print(logmsg.Warning, "ValidateScene: Scene Name not found: " + sName)
+    return false
+  }
+
+  return true
+}
+
+func (pST *SmartThings) FindScene(sName string) int {
+
+  for i := 0; i < len(pST.oScenes.Items); i++ {
+
+    if(strings.Compare(pST.oScenes.Items[i].SceneName, sName) == 0){
+      return(i)
+    }
+
+  }
+
+  logmsg.Print(logmsg.Warning, "FindScene: Scene Name not found: " + sName)
+
+  return -1
+}
+
 func (pST *SmartThings) RunScene(sSceneName string) bool{
 
   var msg string
@@ -340,37 +376,35 @@ func (pST *SmartThings) RunScene(sSceneName string) bool{
   msg = fmt.Sprintf("running SmartThings scene[%s]\n", sSceneName)
   logmsg.Print(logmsg.Info, msg)
 
-  for i := 0; i < len(pST.oScenes.Items); i++ {
+  index := pST.FindScene(sSceneName)
 
-    if(strings.Compare(pST.oScenes.Items[i].SceneName, sSceneName) == 0){
-      msg = fmt.Sprintf("Executing [%s] \n", sSceneName)
-      logmsg.Print(logmsg.Info, msg)
+  if(index == -1){
 
-      endpointname := fmt.Sprintf("%s/scenes/%s/execute", 
-                              pST.sBaseEndpoint, pST.oScenes.Items[i].SceneID)
+    logmsg.Print(logmsg.Error, "RunScene failed - invalid scene name: "+ sSceneName)
+    return false
+  }
+ 
 
-      logmsg.Print(logmsg.Info, endpointname)
+  msg = fmt.Sprintf("Executing [%s] \n", sSceneName)
+  logmsg.Print(logmsg.Info, msg)
 
-      r := restapi.NewPost("execute_scenes", endpointname)
+  endpointname := fmt.Sprintf("%s/scenes/%s/execute", 
+                          pST.sBaseEndpoint, pST.oScenes.Items[index].SceneID)
 
-      r.SetBearerAccessToken(pST.sToken)
+  logmsg.Print(logmsg.Info, endpointname)
 
-      r.JsonOnly()
+  r := restapi.NewPost("execute_scenes", endpointname)
 
-      if(!r.Send()){
-        msg = fmt.Sprintf("Error getting [%s]\n", endpointname)
-        logmsg.Print(logmsg.Error, msg)
-        return false
-      }
+  r.SetBearerAccessToken(pST.sToken)
 
+  r.JsonOnly()
 
-      return true
-    }
-
-
+  if(!r.Send()){
+     msg = fmt.Sprintf("Error getting [%s]\n", endpointname)
+     logmsg.Print(logmsg.Error, msg)
+     return false
   }
 
   return true
-
 }
 
