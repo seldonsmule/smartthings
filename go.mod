@@ -1,4 +1,4 @@
-module smartthings
+module github.com/seldonsmule/smartthings
 
 go 1.19
 
